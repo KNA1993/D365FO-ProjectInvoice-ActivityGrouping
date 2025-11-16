@@ -1,0 +1,19 @@
+{
+  "name": "d365fo-invoice-proposal-tests",
+  "version": "1.0.0",
+  "description": "Playwright MCP tests for D365 F&O Project Invoice Activity Grouping",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "report": "playwright show-report"
+  },
+  "keywords": ["d365fo", "playwright", "testing", "mcp"],
+  "author": "KNA1993",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^20.10.0"
+  }
+}
