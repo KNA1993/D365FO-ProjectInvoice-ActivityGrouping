@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxLabelFile xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>ActivityInvoiceLabels</Name>
+	<LabelContentVersion>1.0.0.0</LabelContentVersion>
+	<Labels>
+		<AxLabel>
+			<Name>ActivityNumber</Name>
+			<Label>Activity number</Label>
+			<LabelId>@SYS123456</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>ActivityNumberHelp</Name>
+			<Label>Project activity associated with this invoice proposal</Label>
+			<LabelId>@SYS123457</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>ActivityGroupingInfo</Name>
+			<Label>Invoice proposals are grouped by activity number</Label>
+			<LabelId>@SYS123458</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>TransactionsWithActivityOnly</Name>
+			<Label>Only transactions with assigned activity numbers will be included</Label>
+			<LabelId>@SYS123459</LabelId>
+		</AxLabel>
+	</Labels>
+</AxLabelFile>

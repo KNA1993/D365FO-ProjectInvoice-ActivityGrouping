@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>ProjInvoiceProposalCreateLines_ActivityExtension</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// Extension to filter project invoice proposal transactions by Activity Number.
+/// Only transactions with an assigned ActivityNumber will be included in proposals.
+/// </summary>
+[ExtensionOf(classStr(ProjInvoiceProposalCreateLines))]
+final class ProjInvoiceProposalCreateLines_ActivityExtension
+{
+    private int skippedTransactionsCount;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>runEmplQuery</Name>
+				<Source><![CDATA[
+/// <summary>
+/// Extends hour transaction selection to filter by Activity Number.
+/// </summary>
+public int runEmplQuery(Query _query)
+{
+    QueryBuildDataSource qbds;
+    QueryBuildRange qbr;
+    
+    // Get the data source for hour transactions
+    qbds = _query.dataSourceTable(tableNum(ProjEmplTransSale));
+    
+    if (qbds)
+    {
+        // Add filter: Only select transactions WITH ActivityNumber
+        qbr = qbds.addRange(fieldNum(ProjEmplTransSale, ActivityNumber));
+        qbr.value(SysQuery::valueNotEmpty());
+        qbr.status(RangeStatus::Locked); // Prevent user from modifying filter
+    }
+    
+    return next runEmplQuery(_query);
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runCostQuery</Name>
+				<Source><![CDATA[
+/// <summary>
+/// Extends expense transaction selection to filter by Activity Number.
+/// </summary>
+public int runCostQuery(Query _query)
+{
+    QueryBuildDataSource qbds;
+    QueryBuildRange qbr;
+    
+    qbds = _query.dataSourceTable(tableNum(ProjCostTransSale));
+    
+    if (qbds)
+    {
+        qbr = qbds.addRange(fieldNum(ProjCostTransSale, ActivityNumber));
+        qbr.value(SysQuery::valueNotEmpty());
+        qbr.status(RangeStatus::Locked);
+    }
+    
+    return next runCostQuery(_query);
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runItemQuery</Name>
+				<Source><![CDATA[
+/// <summary>
+/// Extends item transaction selection to filter by Activity Number.
+/// </summary>
+public int runItemQuery(Query _query)
+{
+    QueryBuildDataSource qbds;
+    QueryBuildRange qbr;
+    
+    qbds = _query.dataSourceTable(tableNum(ProjItemTransSale));
+    
+    if (qbds)
+    {
+        qbr = qbds.addRange(fieldNum(ProjItemTransSale, ActivityNumber));
+        qbr.value(SysQuery::valueNotEmpty());
+        qbr.status(RangeStatus::Locked);
+    }
+    
+    return next runItemQuery(_query);
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runRevenueQuery</Name>
+				<Source><![CDATA[
+/// <summary>
+/// Extends fee transaction selection to filter by Activity Number.
+/// </summary>
+public int runRevenueQuery(Query _query)
+{
+    QueryBuildDataSource qbds;
+    QueryBuildRange qbr;
+    
+    qbds = _query.dataSourceTable(tableNum(ProjRevenueTransSale));
+    
+    if (qbds)
+    {
+        qbr = qbds.addRange(fieldNum(ProjRevenueTransSale, ActivityNumber));
+        qbr.value(SysQuery::valueNotEmpty());
+        qbr.status(RangeStatus::Locked);
+    }
+    
+    return next runRevenueQuery(_query);
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runOnAccountQuery</Name>
+				<Source><![CDATA[
+/// <summary>
+/// Extends on-account transaction selection to filter by Activity Number.
+/// Includes runtime check for field existence.
+/// </summary>
+public int runOnAccountQuery(Query _query)
+{
+    QueryBuildDataSource qbds;
+    QueryBuildRange qbr;
+    DictTable dt;
+    
+    qbds = _query.dataSourceTable(tableNum(ProjOnAccTransSale));
+    
+    if (qbds)
+    {
+        // Check if ActivityNumber field exists on ProjOnAccTransSale
+        dt = new DictTable(tableNum(ProjOnAccTransSale));
+        
+        if (dt.fieldObject(fieldNum(ProjOnAccTransSale, ActivityNumber)))
+        {
+            qbr = qbds.addRange(fieldNum(ProjOnAccTransSale, ActivityNumber));
+            qbr.value(SysQuery::valueNotEmpty());
+            qbr.status(RangeStatus::Locked);
+        }
+        else
+        {
+            info("ActivityNumber field not available on On-Account transactions");
+        }
+    }
+    
+    return next runOnAccountQuery(_query);
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+/// <summary>
+/// Provides summary information about activity-based filtering.
+/// </summary>
+public void run()
+{
+    info("Processing transactions with Activity Number assigned");
+    
+    next run();
+    
+    // Provide summary if any transactions were skipped
+    if (skippedTransactionsCount > 0)
+    {
+        warning(strFmt("%1 transactions without Activity Number were skipped", 
+                      skippedTransactionsCount));
+    }
+}
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

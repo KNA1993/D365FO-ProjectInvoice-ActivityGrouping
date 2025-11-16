@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTableExtension xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>ProjProposalJour_ActivityExtension</Name>
+	<TargetElement>ProjProposalJour</TargetElement>
+	<Fields>
+		<AxTableField xmlns="">
+			<Name>ActivityNumber</Name>
+			<ExtendedDataType>ActivityNumber</ExtendedDataType>
+			<HelpText>Project activity associated with this invoice proposal</HelpText>
+			<Label>@SYS123456</Label>
+			<Mandatory>No</Mandatory>
+		</AxTableField>
+	</Fields>
+	<Indexes>
+		<AxTableIndex xmlns="">
+			<Name>ActivityNumberIdx</Name>
+			<AlternateKey>No</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>ActivityNumber</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+</AxTableExtension>

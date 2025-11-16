@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>ProjInvoiceProposalInsertLines_ActivityExtension</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// Extension to group project invoice proposals by Activity Number.
+/// Each unique combination of Customer+Project+Currency+Funding+Activity creates a separate proposal.
+/// </summary>
+[ExtensionOf(classStr(ProjInvoiceProposalInsertLines))]
+final class ProjInvoiceProposalInsertLines_ActivityExtension
+{
+    private ActivityNumber currentActivityNumber;
+    private Map activityProposalMap; // Cache for activity-based proposal lookup
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>initPreRun</Name>
+				<Source><![CDATA[
+/// <summary>
+/// Initialize state for activity-based grouping.
+/// </summary>
+public void initPreRun()
+{
+    next initPreRun();
+    
+    currentActivityNumber = '';
+    activityProposalMap = new Map(Types::String, Types::Int64);
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>isSetProjProposalJour</Name>
+				<Source><![CDATA[
+/// <summary>
+/// Determines if a new invoice proposal is needed based on activity change.
+/// </summary>
+public boolean isSetProjProposalJour()
+{
+    boolean ret = next isSetProjProposalJour();
+    ActivityNumber transActivity;
+    
+    if (!ret)
+    {
+        // Get activity from current transaction
+        transActivity = this.getActivityNumberFromTransaction();
+        
+        // If activity changed, we need a new proposal
+        if (transActivity != currentActivityNumber)
+        {
+            ret = true;
+        }
+    }
+    
+    return ret;
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getActivityNumberFromTransaction</Name>
+				<Source><![CDATA[
+/// <summary>
+/// Extracts Activity Number from the current transaction based on transaction type.
+/// </summary>
+private ActivityNumber getActivityNumberFromTransaction()
+{
+    ProjTransPosting tmpTrans = this.parmTmpTransaction();
+    ActivityNumber activity = '';
+    
+    switch (tmpTrans.TransType)
+    {
+        case ProjTransType::Hour:
+            ProjEmplTransSale emplTrans;
+            select ActivityNumber from emplTrans
+                where emplTrans.RecId == tmpTrans.RefRecId;
+            activity = emplTrans.ActivityNumber;
+            break;
+            
+        case ProjTransType::Expense:
+            ProjCostTransSale costTrans;
+            select ActivityNumber from costTrans
+                where costTrans.RecId == tmpTrans.RefRecId;
+            activity = costTrans.ActivityNumber;
+            break;
+            
+        case ProjTransType::Item:
+            ProjItemTransSale itemTrans;
+            select ActivityNumber from itemTrans
+                where itemTrans.RecId == tmpTrans.RefRecId;
+            activity = itemTrans.ActivityNumber;
+            break;
+            
+        case ProjTransType::Revenue:
+            ProjRevenueTransSale revenueTrans;
+            select ActivityNumber from revenueTrans
+                where revenueTrans.RecId == tmpTrans.RefRecId;
+            activity = revenueTrans.ActivityNumber;
+            break;
+            
+        case ProjTransType::OnAccount:
+            // Check if field exists
+            DictTable dt = new DictTable(tableNum(ProjOnAccTransSale));
+            if (dt.fieldObject(fieldNum(ProjOnAccTransSale, ActivityNumber)))
+            {
+                ProjOnAccTransSale onAccTrans;
+                select ActivityNumber from onAccTrans
+                    where onAccTrans.RecId == tmpTrans.RefRecId;
+                activity = onAccTrans.ActivityNumber;
+            }
+            break;
+    }
+    
+    return activity;
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setProjProposalJour</Name>
+				<Source><![CDATA[
+/// <summary>
+/// Creates or finds an invoice proposal header grouped by activity.
+/// </summary>
+public void setProjProposalJour(boolean _useExisting = true)
+{
+    ProjProposalJour existingProposal;
+    ActivityNumber transActivity;
+    str cacheKey;
+    
+    // Get activity from current transaction
+    transActivity = this.getActivityNumberFromTransaction();
+    
+    if (!transActivity)
+    {
+        warning("Transaction missing Activity Number - should not happen due to filtering");
+        return;
+    }
+    
+    currentActivityNumber = transActivity;
+    
+    if (_useExisting)
+    {
+        // Build cache key: Project|Currency|Funding|Activity
+        cacheKey = this.parmProjInvoiceProjId() + '|' +
+                   this.parmCurrencyCode() + '|' +
+                   this.parmProjFundingSourceId() + '|' +
+                   currentActivityNumber;
+        
+        // Check cache first
+        if (activityProposalMap.exists(cacheKey))
+        {
+            RecId proposalRecId = activityProposalMap.lookup(cacheKey);
+            select existingProposal
+                where existingProposal.RecId == proposalRecId;
+            
+            if (existingProposal)
+            {
+                this.parmProjProposalJour(existingProposal);
+                return;
+            }
+        }
+        
+        // Check database for existing proposal
+        select firstonly existingProposal
+            where existingProposal.ProjInvoiceProjId == this.parmProjInvoiceProjId()
+               && existingProposal.CurrencyCode == this.parmCurrencyCode()
+               && existingProposal.ActivityNumber == currentActivityNumber
+               && existingProposal.Posted == NoYes::No;
+        
+        if (existingProposal)
+        {
+            this.parmProjProposalJour(existingProposal);
+            
+            // Add to cache
+            activityProposalMap.insert(cacheKey, existingProposal.RecId);
+            return;
+        }
+    }
+    
+    // Create new proposal
+    next setProjProposalJour(false);
+    
+    // Set activity number on new proposal
+    ProjProposalJour newProposal = this.parmProjProposalJour();
+    
+    ttsbegin;
+    newProposal.selectForUpdate(true);
+    newProposal.ActivityNumber = currentActivityNumber;
+    newProposal.update();
+    ttscommit;
+    
+    // Add to cache
+    cacheKey = this.parmProjInvoiceProjId() + '|' +
+               this.parmCurrencyCode() + '|' +
+               this.parmProjFundingSourceId() + '|' +
+               currentActivityNumber;
+    
+    activityProposalMap.insert(cacheKey, newProposal.RecId);
+    
+    info(strFmt("Created invoice proposal for Activity: %1", currentActivityNumber));
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateProposalActivityConsistency</Name>
+				<Source><![CDATA[
+/// <summary>
+/// Validates that all lines in a proposal have the same activity as the header.
+/// </summary>
+private boolean validateProposalActivityConsistency(ProjProposalJour _proposal)
+{
+    boolean isValid = true;
+    ActivityNumber headerActivity = _proposal.ActivityNumber;
+    
+    // Validate hour transactions
+    ProjProposalEmpl emplProposal;
+    ProjProposalEmplDetail emplDetail;
+    ProjEmplTransSale emplTrans;
+    
+    while select emplProposal
+        where emplProposal.ProjProposalId == _proposal.ProjProposalId
+        join emplDetail
+            where emplDetail.RefRecId == emplProposal.RecId
+        join emplTrans
+            where emplTrans.TransId == emplDetail.TransId
+    {
+        if (emplTrans.ActivityNumber != headerActivity)
+        {
+            error(strFmt("Proposal %1 has activity mismatch: Header=%2, Line=%3",
+                        _proposal.ProjProposalId,
+                        headerActivity,
+                        emplTrans.ActivityNumber));
+            isValid = false;
+        }
+    }
+    
+    // Similar checks for other transaction types (Cost, Item, Revenue, OnAccount)
+    // ... (implement as needed)
+    
+    return isValid;
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateInvoice</Name>
+				<Source><![CDATA[
+/// <summary>
+/// Validates activity consistency before finalizing proposal.
+/// </summary>
+public void updateInvoice()
+{
+    ProjProposalJour proposal = this.parmProjProposalJour();
+    
+    if (proposal && proposal.ActivityNumber)
+    {
+        if (!this.validateProposalActivityConsistency(proposal))
+        {
+            error("Activity consistency validation failed");
+        }
+    }
+    
+    next updateInvoice();
+}
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

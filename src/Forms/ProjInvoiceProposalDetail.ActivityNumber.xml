@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxFormExtension xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>ProjInvoiceProposalDetail_ActivityExtension</Name>
+	<TargetElement>ProjInvoiceProposalDetail</TargetElement>
+	<FormDesign>
+		<Pattern>DetailsFormMaster</Pattern>
+		<Controls>
+			<!-- Add ActivityNumber field to Header group -->
+			<AxFormGroupControl>
+				<Name>HeaderGroup</Name>
+				<FormControlExtension>
+					<Controls>
+						<AxFormStringControl>
+							<Name>ActivityNumber</Name>
+							<DataField>ActivityNumber</DataField>
+							<DataSource>ProjProposalJour</DataSource>
+							<DisplayLength>20</DisplayLength>
+							<AllowEdit>No</AllowEdit>
+						</AxFormStringControl>
+					</Controls>
+				</FormControlExtension>
+			</AxFormGroupControl>
+		</Controls>
+	</FormDesign>
+</AxFormExtension>
