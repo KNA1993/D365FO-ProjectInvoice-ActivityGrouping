@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>ProjInvoiceProposalInsertLines_ActivityExtension</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// Extension to group project invoice proposals by Activity Number.
+/// Only applies grouping when UseActivityGrouping is enabled on the project.
+/// </summary>
+[ExtensionOf(classStr(ProjInvoiceProposalInsertLines))]
+final class ProjInvoiceProposalInsertLines_ActivityExtension
+{
+    private ActivityNumber currentActivityNumber;
+    private Map activityProposalMap;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>isActivityGroupingEnabled</Name>
+				<Source><![CDATA[
+/// <summary>
+/// Checks if activity-based grouping is enabled for the current project.
+/// </summary>
+private boolean isActivityGroupingEnabled()
+{
+    ProjTable projTable = ProjTable::find(this.parmProjInvoiceProjId());
+    return projTable.UseActivityGrouping == NoYes::Yes;
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initPreRun</Name>
+				<Source><![CDATA[
+public void initPreRun()
+{
+    next initPreRun();
+    
+    if (this.isActivityGroupingEnabled())
+    {
+        currentActivityNumber = '';
+        activityProposalMap = new Map(Types::String, Types::Int64);
+    }
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>isSetProjProposalJour</Name>
+				<Source><![CDATA[
+public boolean isSetProjProposalJour()
+{
+    boolean ret = next isSetProjProposalJour();
+    ActivityNumber transActivity;
+    
+    // Only check activity if enabled for this project
+    if (!ret && this.isActivityGroupingEnabled())
+    {
+        transActivity = this.getActivityNumberFromTransaction();
+        
+        if (transActivity != currentActivityNumber)
+        {
+            ret = true;
+        }
+    }
+    
+    return ret;
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getActivityNumberFromTransaction</Name>
+				<Source><![CDATA[
+private ActivityNumber getActivityNumberFromTransaction()
+{
+    // Only called when activity grouping is enabled
+    ProjTransPosting tmpTrans = this.parmTmpTransaction();
+    ActivityNumber activity = '';
+    
+    switch (tmpTrans.TransType)
+    {
+        case ProjTransType::Hour:
+            ProjEmplTransSale emplTrans;
+            select ActivityNumber from emplTrans
+                where emplTrans.RecId == tmpTrans.RefRecId;
+            activity = emplTrans.ActivityNumber;
+            break;
+            
+        case ProjTransType::Expense:
+            ProjCostTransSale costTrans;
+            select ActivityNumber from costTrans
+                where costTrans.RecId == tmpTrans.RefRecId;
+            activity = costTrans.ActivityNumber;
+            break;
+            
+        case ProjTransType::Item:
+            ProjItemTransSale itemTrans;
+            select ActivityNumber from itemTrans
+                where itemTrans.RecId == tmpTrans.RefRecId;
+            activity = itemTrans.ActivityNumber;
+            break;
+            
+        case ProjTransType::Revenue:
+            ProjRevenueTransSale revenueTrans;
+            select ActivityNumber from revenueTrans
+                where revenueTrans.RecId == tmpTrans.RefRecId;
+            activity = revenueTrans.ActivityNumber;
+            break;
+            
+        case ProjTransType::OnAccount:
+            DictTable dt = new DictTable(tableNum(ProjOnAccTransSale));
+            if (dt.fieldObject(fieldNum(ProjOnAccTransSale, ActivityNumber)))
+            {
+                ProjOnAccTransSale onAccTrans;
+                select ActivityNumber from onAccTrans
+                    where onAccTrans.RecId == tmpTrans.RefRecId;
+                activity = onAccTrans.ActivityNumber;
+            }
+            break;
+    }
+    
+    return activity;
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setProjProposalJour</Name>
+				<Source><![CDATA[
+public void setProjProposalJour(boolean _useExisting = true)
+{
+    // If activity grouping is disabled, use standard logic
+    if (!this.isActivityGroupingEnabled())
+    {
+        next setProjProposalJour(_useExisting);
+        return;
+    }
+    
+    // Activity grouping enabled - apply custom logic
+    ProjProposalJour existingProposal;
+    ActivityNumber transActivity;
+    str cacheKey;
+    
+    transActivity = this.getActivityNumberFromTransaction();
+    
+    if (!transActivity)
+    {
+        warning("Transaction missing Activity Number - should not happen due to filtering");
+        return;
+    }
+    
+    currentActivityNumber = transActivity;
+    
+    if (_useExisting)
+    {
+        cacheKey = this.parmProjInvoiceProjId() + '|' +
+                   this.parmCurrencyCode() + '|' +
+                   this.parmProjFundingSourceId() + '|' +
+                   currentActivityNumber;
+        
+        if (activityProposalMap.exists(cacheKey))
+        {
+            RecId proposalRecId = activityProposalMap.lookup(cacheKey);
+            select existingProposal
+                where existingProposal.RecId == proposalRecId;
+            
+            if (existingProposal)
+            {
+                this.parmProjProposalJour(existingProposal);
+                return;
+            }
+        }
+        
+        select firstonly existingProposal
+            where existingProposal.ProjInvoiceProjId == this.parmProjInvoiceProjId()
+               && existingProposal.CurrencyCode == this.parmCurrencyCode()
+               && existingProposal.ActivityNumber == currentActivityNumber
+               && existingProposal.Posted == NoYes::No;
+        
+        if (existingProposal)
+        {
+            this.parmProjProposalJour(existingProposal);
+            activityProposalMap.insert(cacheKey, existingProposal.RecId);
+            return;
+        }
+    }
+    
+    next setProjProposalJour(false);
+    
+    ProjProposalJour newProposal = this.parmProjProposalJour();
+    
+    ttsbegin;
+    newProposal.selectForUpdate(true);
+    newProposal.ActivityNumber = currentActivityNumber;
+    newProposal.update();
+    ttscommit;
+    
+    cacheKey = this.parmProjInvoiceProjId() + '|' +
+               this.parmCurrencyCode() + '|' +
+               this.parmProjFundingSourceId() + '|' +
+               currentActivityNumber;
+    
+    activityProposalMap.insert(cacheKey, newProposal.RecId);
+    
+    info(strFmt("Created invoice proposal for Activity: %1", currentActivityNumber));
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateProposalActivityConsistency</Name>
+				<Source><![CDATA[
+private boolean validateProposalActivityConsistency(ProjProposalJour _proposal)
+{
+    // Only validate if activity grouping is enabled
+    if (!this.isActivityGroupingEnabled())
+    {
+        return true;
+    }
+    
+    boolean isValid = true;
+    ActivityNumber headerActivity = _proposal.ActivityNumber;
+    
+    ProjProposalEmpl emplProposal;
+    ProjProposalEmplDetail emplDetail;
+    ProjEmplTransSale emplTrans;
+    
+    while select emplProposal
+        where emplProposal.ProjProposalId == _proposal.ProjProposalId
+        join emplDetail
+            where emplDetail.RefRecId == emplProposal.RecId
+        join emplTrans
+            where emplTrans.TransId == emplDetail.TransId
+    {
+        if (emplTrans.ActivityNumber != headerActivity)
+        {
+            error(strFmt("Proposal %1 has activity mismatch: Header=%2, Line=%3",
+                        _proposal.ProjProposalId,
+                        headerActivity,
+                        emplTrans.ActivityNumber));
+            isValid = false;
+        }
+    }
+    
+    return isValid;
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateInvoice</Name>
+				<Source><![CDATA[
+public void updateInvoice()
+{
+    if (this.isActivityGroupingEnabled())
+    {
+        ProjProposalJour proposal = this.parmProjProposalJour();
+        
+        if (proposal && proposal.ActivityNumber)
+        {
+            if (!this.validateProposalActivityConsistency(proposal))
+            {
+                error("Activity consistency validation failed");
+            }
+        }
+    }
+    
+    next updateInvoice();
+}
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

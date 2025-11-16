@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTableExtension xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>ProjTable_ActivityGrouping</Name>
+	<TargetElement>ProjTable</TargetElement>
+	<Fields>
+		<AxTableField xmlns="">
+			<Name>UseActivityGrouping</Name>
+			<ExtendedDataType>NoYesId</ExtendedDataType>
+			<HelpText>Enable activity-based invoice proposal grouping for this project. When enabled, invoice proposals will be created separately for each activity number.</HelpText>
+			<Label>@ActivityLabels:UseActivityGrouping</Label>
+			<Mandatory>No</Mandatory>
+		</AxTableField>
+	</Fields>
+</AxTableExtension>

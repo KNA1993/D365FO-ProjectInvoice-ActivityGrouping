@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxFormExtension xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>ProjTable_ActivityGrouping</Name>
+	<TargetElement>ProjTable</TargetElement>
+	<FormDesign>
+		<Pattern>DetailsFormMaster</Pattern>
+		<Controls>
+			<!-- Add to Invoice tab or Setup tab -->
+			<AxFormTabPageControl>
+				<Name>TabInvoice</Name>
+				<FormControlExtension>
+					<Controls>
+						<AxFormGroupControl>
+							<Name>InvoicingOptionsGroup</Name>
+							<FormControlExtension>
+								<Controls>
+									<AxFormCheckBoxControl>
+										<Name>UseActivityGrouping</Name>
+										<DataField>UseActivityGrouping</DataField>
+										<DataSource>ProjTable</DataSource>
+										<HelpText>@ActivityLabels:UseActivityGroupingHelp</HelpText>
+									</AxFormCheckBoxControl>
+								</Controls>
+							</FormControlExtension>
+						</AxFormGroupControl>
+					</Controls>
+				</FormControlExtension>
+			</AxFormTabPageControl>
+		</Controls>
+	</FormDesign>
+</AxFormExtension>

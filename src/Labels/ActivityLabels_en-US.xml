@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxLabelFile xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>ActivityInvoiceLabels_en-US</Name>
+	<LanguageId>en-US</LanguageId>
+	<LabelContentVersion>1.0.0.0</LabelContentVersion>
+	<Labels>
+		<AxLabel>
+			<Name>UseActivityGrouping</Name>
+			<Label>Use activity grouping for project invoice proposals</Label>
+			<LabelId>@ActivityLabels:UseActivityGrouping</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>UseActivityGroupingHelp</Name>
+			<Label>When enabled, invoice proposals will be grouped by activity number in addition to standard grouping criteria</Label>
+			<LabelId>@ActivityLabels:UseActivityGroupingHelp</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>ActivityNumber</Name>
+			<Label>Activity number</Label>
+			<LabelId>@ActivityLabels:ActivityNumber</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>ActivityNumberHelp</Name>
+			<Label>Project activity associated with this invoice proposal</Label>
+			<LabelId>@ActivityLabels:ActivityNumberHelp</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>ActivityGroupingInfo</Name>
+			<Label>Invoice proposals are grouped by activity number</Label>
+			<LabelId>@ActivityLabels:ActivityGroupingInfo</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>TransactionsWithActivityOnly</Name>
+			<Label>Only transactions with assigned activity numbers will be included</Label>
+			<LabelId>@ActivityLabels:TransactionsWithActivityOnly</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>ActivityGroupingEnabled</Name>
+			<Label>Activity-based filtering enabled for this project</Label>
+			<LabelId>@ActivityLabels:ActivityGroupingEnabled</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>ActivityGroupingDisabled</Name>
+			<Label>Standard invoice proposal creation (activity filtering disabled)</Label>
+			<LabelId>@ActivityLabels:ActivityGroupingDisabled</LabelId>
+		</AxLabel>
+	</Labels>
+</AxLabelFile>

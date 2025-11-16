@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxLabelFile xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>ActivityInvoiceLabels_nb-NO</Name>
+	<LanguageId>nb-NO</LanguageId>
+	<LabelContentVersion>1.0.0.0</LabelContentVersion>
+	<Labels>
+		<AxLabel>
+			<Name>UseActivityGrouping</Name>
+			<Label>Gruppere basert på aktivitet ved fakturering</Label>
+			<LabelId>@ActivityLabels:UseActivityGrouping</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>UseActivityGroupingHelp</Name>
+			<Label>Når aktivert, vil fakturaforslag grupperes etter aktivitetsnummer i tillegg til standard grupperingskriterier</Label>
+			<LabelId>@ActivityLabels:UseActivityGroupingHelp</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>ActivityNumber</Name>
+			<Label>Aktivitetsnummer</Label>
+			<LabelId>@ActivityLabels:ActivityNumber</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>ActivityNumberHelp</Name>
+			<Label>Prosjektaktivitet knyttet til dette fakturaforslaget</Label>
+			<LabelId>@ActivityLabels:ActivityNumberHelp</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>ActivityGroupingInfo</Name>
+			<Label>Fakturaforslag er gruppert etter aktivitetsnummer</Label>
+			<LabelId>@ActivityLabels:ActivityGroupingInfo</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>TransactionsWithActivityOnly</Name>
+			<Label>Bare transaksjoner med tildelte aktivitetsnumre vil bli inkludert</Label>
+			<LabelId>@ActivityLabels:TransactionsWithActivityOnly</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>ActivityGroupingEnabled</Name>
+			<Label>Aktivitetsbasert filtrering aktivert for dette prosjektet</Label>
+			<LabelId>@ActivityLabels:ActivityGroupingEnabled</LabelId>
+		</AxLabel>
+		<AxLabel>
+			<Name>ActivityGroupingDisabled</Name>
+			<Label>Standard fakturaforslag (aktivitetsfiltrering deaktivert)</Label>
+			<LabelId>@ActivityLabels:ActivityGroupingDisabled</LabelId>
+		</AxLabel>
+	</Labels>
+</AxLabelFile>
