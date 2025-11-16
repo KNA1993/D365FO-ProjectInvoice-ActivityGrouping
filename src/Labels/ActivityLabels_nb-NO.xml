@@ -6,7 +6,7 @@
 	<Labels>
 		<AxLabel>
 			<Name>UseActivityGrouping</Name>
-			<Label>Gruppere basert på aktivitet ved fakturering</Label>
+			<Label>Gruppere prosjektfaktura basert på aktivitet ved fakturering</Label>
 			<LabelId>@ActivityLabels:UseActivityGrouping</LabelId>
 		</AxLabel>
 		<AxLabel>
